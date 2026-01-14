@@ -15,15 +15,15 @@ if !has('nvim-0.10')
   finish
 endif
 
-" Commands
-command! -range OllamaEdit call ollama#Edit()
-command! -range OllamaChat call ollama#Chat()
-command! OllamaModel call ollama#SwitchModel()
+" Commands for interacting with Ollama
+command! -range OllamaEdit call ollama#Edit()      " Edit selected text with Ollama
+command! -range OllamaChat call ollama#Chat()      " Chat with Ollama about selected text
+command! OllamaModel call ollama#SwitchModel()     " Switch between Ollama models
 
-" Plug mappings
-xnoremap <silent> <Plug>(ollama-edit) :<C-u>call ollama#Edit()<CR>
-xnoremap <silent> <Plug>(ollama-chat) :<C-u>call ollama#Chat()<CR>
-nnoremap <silent> <Plug>(ollama-model) :<C-u>call ollama#SwitchModel()<CR>
+" Plug mappings for keybinding customization
+xnoremap <silent> <Plug>(ollama-edit) :<C-u>call ollama#Edit()<CR>    " Edit mapping for visual mode
+xnoremap <silent> <Plug>(ollama-chat) :<C-u>call ollama#Chat()<CR>    " Chat mapping for visual mode
+nnoremap <silent> <Plug>(ollama-model) :<C-u>call ollama#SwitchModel()<CR>  " Model switch mapping for normal mode
 
 " Default mappings - configurable via g:ollama_*_keymap
 if !get(g:, 'ollama_no_maps', 0)
