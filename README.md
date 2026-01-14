@@ -6,6 +6,7 @@ A Neovim plugin for AI-assisted code editing using [Ollama](https://ollama.ai). 
 
 - **Edit Mode** (`<leader>k`): Select code, describe changes, preview diff, apply
 - **Chat Mode** (`<leader>c`): Multi-turn conversation about selected code with `/edit` command to apply changes
+- **Model Switcher** (`<leader>M`): Quick switch between configured models
 
 ## Requirements
 
@@ -26,6 +27,7 @@ A Neovim plugin for AI-assisted code editing using [Ollama](https://ollama.ai). 
   keys = {
     { "<leader>k", mode = "v", desc = "Ollama Edit" },
     { "<leader>c", mode = "v", desc = "Ollama Chat" },
+    { "<leader>M", desc = "Ollama Model" },
   },
 }
 ```
@@ -70,9 +72,13 @@ git clone https://github.com/ParthSareen/vimollama ~/.local/share/nvim/site/pack
 -- Required: specify your Ollama model
 vim.g.ollama_model = "qwen3-coder:480b-cloud"
 
+-- Optional: models for the switcher (defaults shown)
+vim.g.ollama_models = { "qwen3-coder:480b-cloud", "glm-4.7:cloud" }
+
 -- Optional: customize keymaps (defaults shown)
-vim.g.ollama_keymap = "<leader>k"       -- edit mode
-vim.g.ollama_chat_keymap = "<leader>c"  -- chat mode
+vim.g.ollama_keymap = "<leader>k"        -- edit mode
+vim.g.ollama_chat_keymap = "<leader>c"   -- chat mode
+vim.g.ollama_model_keymap = "<leader>M" -- model switcher
 
 -- Optional: custom Ollama endpoint (default: localhost:11434)
 vim.g.ollama_endpoint = "http://localhost:11434/api/generate"
@@ -88,6 +94,7 @@ vim.g.ollama_chat_edit_system_prompt = "Your custom chat-edit prompt..."
 
 - `:OllamaEdit` - Start edit mode (visual mode)
 - `:OllamaChat` - Start chat mode (visual mode)
+- `:OllamaModel` - Open model switcher
 
 ## Highlight Groups
 
@@ -101,6 +108,24 @@ vim.api.nvim_set_hl(0, "OllamaChatCode", { fg = "#6c7086" })      -- code contex
 vim.api.nvim_set_hl(0, "OllamaChatUser", { fg = "#89b4fa" })      -- user messages
 vim.api.nvim_set_hl(0, "OllamaChatAssistant", { fg = "#a6e3a1" }) -- assistant messages
 ```
+
+## Custom Mappings
+
+If you prefer to set up your own keymaps, disable the defaults and use the `<Plug>` mappings:
+
+```lua
+vim.g.ollama_no_maps = true  -- disable default keymaps
+
+-- Then map manually:
+vim.keymap.set("x", "<leader>k", "<Plug>(ollama-edit)")
+vim.keymap.set("x", "<leader>c", "<Plug>(ollama-chat)")
+vim.keymap.set("n", "<leader>M", "<Plug>(ollama-model)")
+```
+
+Available `<Plug>` mappings:
+- `<Plug>(ollama-edit)` - Edit mode (visual)
+- `<Plug>(ollama-chat)` - Chat mode (visual)
+- `<Plug>(ollama-model)` - Model switcher (normal)
 
 ## License
 

@@ -55,4 +55,21 @@ M.append_chat_message = chat_ui.append_message
 M.show_chat_loading = chat_ui.show_loading
 M.hide_chat_loading = chat_ui.hide_loading
 
+-- Model picker using vim.ui.select (integrates with telescope/dressing.nvim)
+function M.show_model_picker(models, current)
+  vim.ui.select(models, {
+    prompt = "Select Ollama model:",
+    format_item = function(item)
+      if item == current then
+        return item .. " (current)"
+      end
+      return item
+    end,
+  }, function(selected)
+    if selected then
+      vim.fn["ollama#OnModelSelect"](selected)
+    end
+  end)
+end
+
 return M

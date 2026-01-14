@@ -18,18 +18,23 @@ endif
 " Commands
 command! -range OllamaEdit call ollama#Edit()
 command! -range OllamaChat call ollama#Chat()
+command! OllamaModel call ollama#SwitchModel()
 
 " Plug mappings
 xnoremap <silent> <Plug>(ollama-edit) :<C-u>call ollama#Edit()<CR>
 xnoremap <silent> <Plug>(ollama-chat) :<C-u>call ollama#Chat()<CR>
+nnoremap <silent> <Plug>(ollama-model) :<C-u>call ollama#SwitchModel()<CR>
 
-" Default mappings (visual mode) - configurable via g:ollama_keymap / g:ollama_chat_keymap
+" Default mappings - configurable via g:ollama_*_keymap
 if !get(g:, 'ollama_no_maps', 0)
   let s:keymap = get(g:, 'ollama_keymap', '<leader>k')
   execute 'xmap ' . s:keymap . ' <Plug>(ollama-edit)'
 
   let s:chat_keymap = get(g:, 'ollama_chat_keymap', '<leader>c')
   execute 'xmap ' . s:chat_keymap . ' <Plug>(ollama-chat)'
+
+  let s:model_keymap = get(g:, 'ollama_model_keymap', '<leader>M')
+  execute 'nmap ' . s:model_keymap . ' <Plug>(ollama-model)'
 endif
 
 " Highlight groups for preview window

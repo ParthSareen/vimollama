@@ -3,6 +3,9 @@
 let s:state = {}
 let s:chat_state = {}
 
+" Default models for switcher
+let s:default_models = ['qwen3-coder:480b-cloud', 'glm-4.7:cloud']
+
 let s:system_prompt = "You are a code editing assistant. The user will provide code and an instruction for how to modify it.\n\nCRITICAL RULES:\n1. Return ONLY the modified code\n2. Wrap your code output in <code></code> tags\n3. Do NOT include explanations, comments about changes, or markdown formatting\n4. Do NOT include the original code - only the modified version\n5. Preserve the original indentation style\n6. If the instruction is unclear, make the most reasonable interpretation\n\nExample response format:\n<code>\nfunction modified() {\n  // your modified code here\n}\n</code>"
 
 let s:chat_system_prompt = "You are a helpful coding assistant. The user has selected some code and wants to discuss it. Answer questions, explain code, suggest improvements. Be concise but helpful."
@@ -334,4 +337,22 @@ function! s:BuildEditMessages(state, instruction) abort
   call add(l:messages, {'role': 'user', 'content': l:edit_msg})
 
   return l:messages
+endfunction
+
+" ============================================================================
+" Model Switcher
+" ============================================================================
+
+" Switch between configured models
+function! ollama#SwitchModel() abort
+  let l:models = get(g:, 'ollama_models', s:default_models)
+  let l:current = get(g:, 'ollama_model', '')
+
+  call luaeval('require("ollama").show_model_picker(_A[1], _A[2])', [l:models, l:current])
+endfunction
+
+" Called from Lua when user selects a model
+function! ollama#OnModelSelect(model) abort
+  let g:ollama_model = a:model
+  echo 'Ollama: Model set to ' . a:model
 endfunction
