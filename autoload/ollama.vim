@@ -218,30 +218,30 @@ function! ollama#OnChatSubmit(message) abort
   " Update UI with user message
   call luaeval('require("ollama").append_chat_message("user", _A)', a:message)
 
-  " Show loading
-  call luaeval('require("ollama").show_chat_loading()')
-
   " Build messages for API
   let l:model = get(g:, 'ollama_model', '')
 
   if l:is_edit
-    " For edit mode, use simplified prompt with just the code and instruction
+    " For edit mode, use non-streaming API (need full response for code extraction)
+    call luaeval('require("ollama").show_chat_loading()')
     let l:messages = s:BuildEditMessages(s:chat_state, l:edit_instruction)
     let l:system = get(g:, 'ollama_chat_edit_system_prompt', s:chat_edit_system_prompt)
+    call luaeval('require("ollama").chat(_A[1], _A[2], _A[3], _A[4])', [l:model, l:messages, l:system, 1])
   else
-    " For chat mode, include full conversation history
+    " For chat mode, use streaming API
     let l:messages = s:BuildChatMessages(s:chat_state, 0)
     let l:system = get(g:, 'ollama_chat_system_prompt', s:chat_system_prompt)
+    call luaeval('require("ollama").chat_stream(_A[1], _A[2], _A[3])', [l:model, l:messages, l:system])
   endif
-
-  " Call Ollama API
-  call luaeval('require("ollama").chat(_A[1], _A[2], _A[3], _A[4])', [l:model, l:messages, l:system, l:is_edit ? 1 : 0])
 endfunction
 
 " Called from Lua on successful chat response
-function! ollama#OnChatResponse(response, is_edit) abort
+function! ollama#OnChatResponse(response, is_edit, ...) abort
   " Hide loading
   lua require('ollama').hide_chat_loading()
+
+  " Get thinking content (optional 3rd argument)
+  let l:thinking = get(a:, 1, '')
 
   " Safety check - ensure chat state exists
   if !exists('s:chat_state') || type(s:chat_state) != v:t_dict || !has_key(s:chat_state, 'history')
@@ -255,6 +255,11 @@ function! ollama#OnChatResponse(response, is_edit) abort
   call add(s:chat_state.history, {'role': 'assistant', 'content': a:response})
 
   if a:is_edit
+    " Show thinking collapsed in chat if present
+    if !empty(l:thinking)
+      call luaeval('require("ollama").append_chat_message("assistant", "💭 [Thinking collapsed]")')
+    endif
+
     " Extract code and show preview
     let l:code = s:ExtractCode(a:response)
     if empty(l:code)
@@ -280,7 +285,7 @@ function! ollama#OnChatResponse(response, is_edit) abort
     " Show preview
     call luaeval('require("ollama").show_preview(_A)', s:state)
   else
-    " Regular chat response
+    " Regular chat response (shouldn't happen - regular chat uses streaming now)
     call luaeval('require("ollama").append_chat_message("assistant", _A)', a:response)
   endif
 endfunction
@@ -295,6 +300,19 @@ endfunction
 function! ollama#OnChatClose() abort
   " Clear chat state (ephemeral history)
   let s:chat_state = {}
+endfunction
+
+" Called from Lua when streaming chat completes
+function! ollama#OnChatStreamDone(response) abort
+  " Safety check - ensure chat state exists
+  if !exists('s:chat_state') || type(s:chat_state) != v:t_dict || !has_key(s:chat_state, 'history')
+    return
+  endif
+
+  " Add assistant response to history (strip thinking tags for history)
+  let l:clean_response = substitute(a:response, '<think>\_.\{-}<\/think>', '', 'g')
+  let l:clean_response = substitute(l:clean_response, '^\s*\n', '', '')
+  call add(s:chat_state.history, {'role': 'assistant', 'content': l:clean_response})
 endfunction
 
 " Build messages array for chat API
@@ -354,5 +372,22 @@ endfunction
 " Called from Lua when user selects a model
 function! ollama#OnModelSelect(model) abort
   let g:ollama_model = a:model
+  call s:SaveModel(a:model)
   echo 'Ollama: Model set to ' . a:model
+endfunction
+
+" Save model choice to ~/.vimollama
+function! s:SaveModel(model) abort
+  call writefile([a:model], expand('~/.vimollama'))
+endfunction
+
+" Load saved model from ~/.vimollama (overrides config default)
+function! ollama#LoadSavedModel() abort
+  let l:file = expand('~/.vimollama')
+  if filereadable(l:file)
+    let l:lines = readfile(l:file)
+    if len(l:lines) > 0 && !empty(l:lines[0])
+      let g:ollama_model = l:lines[0]
+    endif
+  endif
 endfunction

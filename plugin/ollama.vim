@@ -15,15 +15,18 @@ if !has('nvim-0.10')
   finish
 endif
 
-" Commands for interacting with Ollama
-command! -range OllamaEdit call ollama#Edit()      " Edit selected text with Ollama
-command! -range OllamaChat call ollama#Chat()      " Chat with Ollama about selected text
-command! OllamaModel call ollama#SwitchModel()     " Switch between Ollama models
+" Load saved model preference from ~/.vimollama
+call ollama#LoadSavedModel()
 
-" Plug mappings for keybinding customization
-xnoremap <silent> <Plug>(ollama-edit) :<C-u>call ollama#Edit()<CR>    " Edit mapping for visual mode
-xnoremap <silent> <Plug>(ollama-chat) :<C-u>call ollama#Chat()<CR>    " Chat mapping for visual mode
-nnoremap <silent> <Plug>(ollama-model) :<C-u>call ollama#SwitchModel()<CR>  " Model switch mapping for normal mode
+" Commands
+command! -range OllamaEdit call ollama#Edit()
+command! -range OllamaChat call ollama#Chat()
+command! OllamaModel call ollama#SwitchModel()
+
+" Plug mappings
+xnoremap <silent> <Plug>(ollama-edit) :<C-u>call ollama#Edit()<CR>
+xnoremap <silent> <Plug>(ollama-chat) :<C-u>call ollama#Chat()<CR>
+nnoremap <silent> <Plug>(ollama-model) :<C-u>call ollama#SwitchModel()<CR>
 
 " Default mappings - configurable via g:ollama_*_keymap
 if !get(g:, 'ollama_no_maps', 0)
@@ -46,3 +49,4 @@ highlight default OllamaPreviewHeader guifg=#61afef ctermfg=75 gui=bold cterm=bo
 highlight default OllamaChatUser guifg=#61afef ctermfg=75 gui=bold cterm=bold
 highlight default OllamaChatAssistant guifg=#98c379 ctermfg=114
 highlight default OllamaChatCode guifg=#abb2bf ctermfg=249 gui=italic cterm=italic
+highlight default OllamaChatThinking guifg=#5c6370 ctermfg=241 gui=italic cterm=italic

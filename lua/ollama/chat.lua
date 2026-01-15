@@ -13,6 +13,13 @@ local spinner_frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧",
 local spinner_idx = 1
 local spinner_timer = nil
 
+-- Streaming state
+local stream_start_line = nil
+local stream_in_thinking = false
+local stream_thinking_content = ""
+local stream_response_content = ""
+local stream_thinking_done = false
+
 -- Show the chat window
 function M.show_chat(chat_state)
   state = chat_state
@@ -244,6 +251,147 @@ function M.close_chat()
   state = nil
 
   vim.fn["ollama#OnChatClose"]()
+end
+
+-- ============================================================================
+-- Streaming Support
+-- ============================================================================
+
+-- Start streaming response
+function M.start_streaming()
+  if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+    return
+  end
+
+  -- Reset streaming state
+  stream_in_thinking = false
+  stream_thinking_content = ""
+  stream_response_content = ""
+  stream_thinking_done = false
+
+  -- Add "Assistant: " line
+  vim.bo[chat_buf].modifiable = true
+  local line_count = vim.api.nvim_buf_line_count(chat_buf)
+  vim.api.nvim_buf_set_lines(chat_buf, line_count, line_count, false, { "Assistant: " })
+  stream_start_line = line_count
+  vim.bo[chat_buf].modifiable = false
+
+  -- Apply highlight
+  local ns = vim.api.nvim_create_namespace("ollama_chat")
+  vim.api.nvim_buf_add_highlight(chat_buf, ns, "OllamaChatAssistant", stream_start_line, 0, -1)
+
+  -- Scroll to bottom
+  if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+    vim.api.nvim_win_set_cursor(chat_win, { line_count + 1, 0 })
+  end
+end
+
+-- Process streaming chunk
+-- is_thinking: true if this chunk is from the thinking field
+function M.stream_chunk(chunk, full_content, is_thinking)
+  if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+    return
+  end
+
+  -- Track thinking vs response content
+  if is_thinking then
+    stream_in_thinking = true
+    stream_thinking_content = stream_thinking_content .. chunk
+  else
+    -- Once we get non-thinking content, thinking is done
+    if stream_in_thinking then
+      stream_in_thinking = false
+      stream_thinking_done = true
+    end
+    stream_response_content = full_content
+  end
+
+  -- Build display content
+  local lines = {}
+  local prefix = "Assistant: "
+
+  if stream_in_thinking then
+    -- Show thinking with indicator (live)
+    local thinking_lines = vim.split("💭 " .. stream_thinking_content, "\n")
+    for i, line in ipairs(thinking_lines) do
+      if i == 1 then
+        table.insert(lines, prefix .. line)
+      else
+        table.insert(lines, string.rep(" ", #prefix) .. line)
+      end
+    end
+  elseif stream_thinking_done then
+    -- Thinking done, show collapsed + response
+    table.insert(lines, prefix .. "💭 [Thinking collapsed]")
+    if stream_response_content ~= "" then
+      local response_lines = vim.split(stream_response_content, "\n")
+      for i, line in ipairs(response_lines) do
+        if i == 1 then
+          table.insert(lines, string.rep(" ", #prefix) .. line)
+        else
+          table.insert(lines, string.rep(" ", #prefix) .. line)
+        end
+      end
+    end
+  else
+    -- No thinking, just show content
+    local content_lines = vim.split(full_content, "\n")
+    for i, line in ipairs(content_lines) do
+      if i == 1 then
+        table.insert(lines, prefix .. line)
+      else
+        table.insert(lines, string.rep(" ", #prefix) .. line)
+      end
+    end
+  end
+
+  -- Update buffer
+  vim.bo[chat_buf].modifiable = true
+  local end_line = vim.api.nvim_buf_line_count(chat_buf)
+  vim.api.nvim_buf_set_lines(chat_buf, stream_start_line, end_line, false, lines)
+  vim.bo[chat_buf].modifiable = false
+
+  -- Apply highlights
+  local ns = vim.api.nvim_create_namespace("ollama_chat")
+  for i = 0, #lines - 1 do
+    local hl = "OllamaChatAssistant"
+    if stream_in_thinking or (lines[i + 1] and lines[i + 1]:match("💭")) then
+      hl = "OllamaChatThinking"
+    end
+    vim.api.nvim_buf_add_highlight(chat_buf, ns, hl, stream_start_line + i, 0, -1)
+  end
+
+  -- Scroll to bottom
+  if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+    local new_count = vim.api.nvim_buf_line_count(chat_buf)
+    vim.api.nvim_win_set_cursor(chat_win, { new_count, 0 })
+  end
+end
+
+-- End streaming response
+function M.end_streaming(full_content)
+  if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+    return
+  end
+
+  -- Add blank line after response
+  vim.bo[chat_buf].modifiable = true
+  local line_count = vim.api.nvim_buf_line_count(chat_buf)
+  vim.api.nvim_buf_set_lines(chat_buf, line_count, line_count, false, { "" })
+  vim.bo[chat_buf].modifiable = false
+
+  -- Reset state
+  stream_start_line = nil
+  stream_in_thinking = false
+  stream_thinking_content = ""
+  stream_response_content = ""
+  stream_thinking_done = false
+
+  -- Return focus to input
+  if input_win and vim.api.nvim_win_is_valid(input_win) then
+    vim.api.nvim_set_current_win(input_win)
+    vim.cmd("startinsert!")
+  end
 end
 
 return M

@@ -22,7 +22,7 @@ function M.generate(model, prompt, system_prompt)
   )
 end
 
--- Chat via Ollama API
+-- Chat via Ollama API (non-streaming, used for /edit)
 -- Called from VimL with model, messages, system_prompt, is_edit
 function M.chat(model, messages, system_prompt, is_edit)
   -- Ensure is_edit is a proper number for VimL
@@ -32,10 +32,36 @@ function M.chat(model, messages, system_prompt, is_edit)
     model,
     messages,
     system_prompt,
-    function(response)
-      vim.fn["ollama#OnChatResponse"](response, edit_flag)
+    function(response, thinking)
+      vim.fn["ollama#OnChatResponse"](response, edit_flag, thinking or "")
     end,
     function(error)
+      vim.fn["ollama#OnChatError"](error)
+    end
+  )
+end
+
+-- Streaming chat via Ollama API
+-- Called from VimL with model, messages, system_prompt
+function M.chat_stream(model, messages, system_prompt)
+  -- Initialize streaming state in chat UI
+  chat_ui.start_streaming()
+
+  api.chat_stream(
+    model,
+    messages,
+    system_prompt,
+    function(chunk, full_content, is_thinking)
+      -- Update chat UI with new chunk
+      chat_ui.stream_chunk(chunk, full_content, is_thinking)
+    end,
+    function(full_content)
+      -- Streaming complete
+      chat_ui.end_streaming(full_content)
+      vim.fn["ollama#OnChatStreamDone"](full_content)
+    end,
+    function(error)
+      chat_ui.end_streaming("")
       vim.fn["ollama#OnChatError"](error)
     end
   )
