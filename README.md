@@ -5,7 +5,7 @@ A Neovim plugin for AI-assisted code editing using [Ollama](https://ollama.ai). 
 ## Features
 
 - **Edit Mode** (`<leader>k`): Select code, describe changes, preview diff, apply
-- **Chat Mode** (`<leader>c`): Multi-turn conversation about selected code with `/edit` command to apply changes
+- **Chat Mode** (`<leader>K`): Multi-turn conversation about selected code with `/edit` command to apply changes
 - **Model Switcher** (`<leader>M`): Quick switch between configured models
 
 ## Requirements
@@ -26,7 +26,7 @@ A Neovim plugin for AI-assisted code editing using [Ollama](https://ollama.ai). 
   end,
   keys = {
     { "<leader>k", mode = "v", desc = "Ollama Edit" },
-    { "<leader>c", mode = "v", desc = "Ollama Chat" },
+    { "<leader>K", mode = "v", desc = "Ollama Chat" },
     { "<leader>M", desc = "Ollama Model" },
   },
 }
@@ -56,10 +56,10 @@ git clone https://github.com/ParthSareen/vimollama ~/.local/share/nvim/site/pack
 4. Review the diff preview
 5. Press `Enter` or `y` to apply, `Esc` or `q` to cancel
 
-### Chat Mode (`<leader>c`)
+### Chat Mode (`<leader>K`)
 
 1. Select code in visual mode
-2. Press `<leader>c`
+2. Press `<leader>K`
 3. Ask questions about the code
 4. Continue the conversation (history is maintained)
 5. Type `/edit <instruction>` to modify the code
@@ -77,7 +77,7 @@ vim.g.ollama_models = { "qwen3-coder:480b-cloud", "glm-4.7:cloud" }
 
 -- Optional: customize keymaps (defaults shown)
 vim.g.ollama_keymap = "<leader>k"        -- edit mode
-vim.g.ollama_chat_keymap = "<leader>c"   -- chat mode
+vim.g.ollama_chat_keymap = "<leader>K"   -- chat mode
 vim.g.ollama_model_keymap = "<leader>M" -- model switcher
 
 -- Optional: custom Ollama endpoint (default: localhost:11434)
@@ -118,7 +118,7 @@ vim.g.ollama_no_maps = true  -- disable default keymaps
 
 -- Then map manually:
 vim.keymap.set("x", "<leader>k", "<Plug>(ollama-edit)")
-vim.keymap.set("x", "<leader>c", "<Plug>(ollama-chat)")
+vim.keymap.set("x", "<leader>K", "<Plug>(ollama-chat)")
 vim.keymap.set("n", "<leader>M", "<Plug>(ollama-model)")
 ```
 

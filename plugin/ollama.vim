@@ -30,7 +30,7 @@ if !get(g:, 'ollama_no_maps', 0)
   let s:keymap = get(g:, 'ollama_keymap', '<leader>k')
   execute 'xmap ' . s:keymap . ' <Plug>(ollama-edit)'
 
-  let s:chat_keymap = get(g:, 'ollama_chat_keymap', '<leader>c')
+  let s:chat_keymap = get(g:, 'ollama_chat_keymap', '<leader>K')
   execute 'xmap ' . s:chat_keymap . ' <Plug>(ollama-chat)'
 
   let s:model_keymap = get(g:, 'ollama_model_keymap', '<leader>M')
