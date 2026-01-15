@@ -45,7 +45,9 @@ function M.show_prompt_input()
     vim.fn["ollama#OnPromptSubmit"](text)
   end)
 
-  -- Clear any existing content and start in insert mode
+  -- Clear registers and buffer, then start insert mode
+  vim.fn.setreg('"', '')
+  vim.fn.setreg('0', '')
   vim.api.nvim_buf_set_lines(prompt_buf, 0, -1, false, {""})
   vim.cmd("startinsert!")
 
