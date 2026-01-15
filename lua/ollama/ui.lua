@@ -45,11 +45,11 @@ function M.show_prompt_input()
     vim.fn["ollama#OnPromptSubmit"](text)
   end)
 
-  -- Clear registers and buffer, then start insert mode
-  vim.fn.setreg('"', '')
-  vim.fn.setreg('0', '')
-  vim.api.nvim_buf_set_lines(prompt_buf, 0, -1, false, {""})
+  -- Start insert mode and clear any pre-filled text
   vim.cmd("startinsert!")
+  vim.schedule(function()
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-u>", true, false, true), "n", false)
+  end)
 
   -- Escape to cancel
   vim.keymap.set("i", "<Esc>", function()

@@ -92,11 +92,11 @@ function M.show_chat(chat_state)
     end
   end)
 
-  -- Clear registers and buffer, then start insert mode
-  vim.fn.setreg('"', '')
-  vim.fn.setreg('0', '')
-  vim.api.nvim_buf_set_lines(input_buf, 0, -1, false, {""})
+  -- Start insert mode and clear any pre-filled text
   vim.cmd("startinsert!")
+  vim.schedule(function()
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-u>", true, false, true), "n", false)
+  end)
 
   -- Keymaps for input buffer
   local opts = { buffer = input_buf, nowait = true }
