@@ -92,8 +92,9 @@ function M.show_chat(chat_state)
     end
   end)
 
-  -- Start in insert mode
-  vim.cmd("startinsert")
+  -- Clear any existing content and start in insert mode
+  vim.api.nvim_buf_set_lines(input_buf, 0, -1, false, {""})
+  vim.cmd("startinsert!")
 
   -- Keymaps for input buffer
   local opts = { buffer = input_buf, nowait = true }
@@ -120,7 +121,7 @@ function M.show_chat(chat_state)
   vim.keymap.set("n", "i", function()
     if input_win and vim.api.nvim_win_is_valid(input_win) then
       vim.api.nvim_set_current_win(input_win)
-      vim.cmd("startinsert")
+      vim.cmd("startinsert!")
     end
   end, chat_opts)
 end
@@ -173,7 +174,7 @@ function M.append_message(role, content)
 
   if input_win and vim.api.nvim_win_is_valid(input_win) then
     vim.api.nvim_set_current_win(input_win)
-    vim.cmd("startinsert")
+    vim.cmd("startinsert!")
   end
 end
 

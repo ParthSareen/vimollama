@@ -45,8 +45,9 @@ function M.show_prompt_input()
     vim.fn["ollama#OnPromptSubmit"](text)
   end)
 
-  -- Start in insert mode
-  vim.cmd("startinsert")
+  -- Clear any existing content and start in insert mode
+  vim.api.nvim_buf_set_lines(prompt_buf, 0, -1, false, {""})
+  vim.cmd("startinsert!")
 
   -- Escape to cancel
   vim.keymap.set("i", "<Esc>", function()
