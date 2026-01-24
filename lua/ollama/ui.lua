@@ -62,6 +62,29 @@ function M.show_prompt_input()
     M.close_prompt()
     vim.fn["ollama#OnCancel"]()
   end, { buffer = prompt_buf, nowait = true })
+
+  -- Shift+Enter to submit (alternative to Enter)
+  vim.keymap.set("i", "<S-CR>", function()
+    local text = vim.fn.getline("."):gsub("^Edit instruction: ", "")
+    M.close_prompt()
+    vim.fn["ollama#OnPromptSubmit"](text)
+  end, { buffer = prompt_buf, nowait = true })
+
+  -- Paste from system clipboard
+  vim.keymap.set("i", "<C-v>", function()
+    local clipboard = vim.fn.getreg("+")
+    if clipboard ~= "" then
+      vim.api.nvim_put({ clipboard }, "c", true, true)
+    end
+  end, { buffer = prompt_buf, nowait = true })
+
+  -- Paste from unnamed register
+  vim.keymap.set("i", "<C-r><C-r>", function()
+    local reg = vim.fn.getreg('"')
+    if reg ~= "" then
+      vim.api.nvim_put({ reg }, "c", true, true)
+    end
+  end, { buffer = prompt_buf, nowait = true })
 end
 
 -- Simple diff: compute line-by-line differences

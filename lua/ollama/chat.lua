@@ -116,6 +116,32 @@ function M.show_chat(chat_state)
     M.close_chat()
   end, opts)
 
+  -- Shift+Enter to submit (alternative to Enter)
+  vim.keymap.set("i", "<S-CR>", function()
+    local text = vim.fn.getline("."):gsub("^> ", "")
+    if text ~= "" then
+      vim.fn["ollama#OnChatSubmit"](text)
+      vim.fn.setline(".", "> ")
+      vim.cmd("startinsert!")
+    end
+  end, opts)
+
+  -- Paste from system clipboard
+  vim.keymap.set("i", "<C-v>", function()
+    local clipboard = vim.fn.getreg("+")
+    if clipboard ~= "" then
+      vim.api.nvim_put({ clipboard }, "c", true, true)
+    end
+  end, opts)
+
+  -- Paste from unnamed register
+  vim.keymap.set("i", "<C-r><C-r>", function()
+    local reg = vim.fn.getreg('"')
+    if reg ~= "" then
+      vim.api.nvim_put({ reg }, "c", true, true)
+    end
+  end, opts)
+
   -- Keymaps for chat buffer (when browsing history)
   local chat_opts = { buffer = chat_buf, nowait = true }
 

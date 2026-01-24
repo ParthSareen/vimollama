@@ -2,6 +2,8 @@
 " Maintainer: Parth
 " License: MIT
 
+let g:ollama_plugin_path = expand('<sfile>:p')
+let g:ollama_autoload_path = fnamemodify(g:ollama_plugin_path, ':h:h') . '/autoload/ollama.vim'
 if exists('g:loaded_ollama')
   finish
 endif
@@ -19,9 +21,16 @@ endif
 call ollama#LoadSavedModel()
 
 " Commands
+" Edit selected text with Ollama
 command! -range OllamaEdit call ollama#Edit()
+" Start a chat session with Ollama
 command! -range OllamaChat call ollama#Chat()
+" Switch between different Ollama models
 command! OllamaModel call ollama#SwitchModel()
+" Debug Ollama integration issues
+command! -range OllamaDebug call ollama#Debug()
+" Reload the Ollama plugin configuration
+command! OllamaReload unlet! g:loaded_ollama | execute 'source' g:ollama_autoload_path | execute 'source' g:ollama_plugin_path | echo "Ollama reloaded"
 
 " Plug mappings
 xnoremap <silent> <Plug>(ollama-edit) :<C-u>call ollama#Edit()<CR>
