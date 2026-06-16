@@ -4,6 +4,20 @@ local M = {}
 
 local DEFAULT_ENDPOINT = "http://localhost:11434/api/generate"
 local DEFAULT_CHAT_ENDPOINT = "http://localhost:11434/api/chat"
+local DEFAULT_RECOMMENDATIONS_ENDPOINT = "http://localhost:11434/api/experimental/model-recommendations"
+
+local function recommendations_endpoint()
+  if vim.g.ollama_model_recommendations_endpoint then
+    return vim.g.ollama_model_recommendations_endpoint
+  end
+
+  local chat_endpoint = vim.g.ollama_chat_endpoint or DEFAULT_CHAT_ENDPOINT
+  local base = chat_endpoint:gsub("/api/chat/?$", "")
+  if base == chat_endpoint then
+    return DEFAULT_RECOMMENDATIONS_ENDPOINT
+  end
+  return base .. "/api/experimental/model-recommendations"
+end
 
 function M.generate(model, prompt, system_prompt, on_success, on_error)
   local endpoint = vim.g.ollama_endpoint or DEFAULT_ENDPOINT
@@ -122,6 +136,56 @@ function M.chat(model, messages, system_prompt, on_success, on_error)
       end
 
       on_success(content, thinking)
+    end)
+  end)
+end
+
+function M.model_recommendations(on_success, on_error)
+  local cmd = {
+    "curl",
+    "-s",
+    recommendations_endpoint(),
+  }
+
+  vim.system(cmd, { text = true }, function(result)
+    vim.schedule(function()
+      if result.code ~= 0 then
+        local err_msg = result.stderr or "Unknown error"
+        if err_msg:match("Connection refused") then
+          on_error("Cannot connect to Ollama. Is it running? Try: ollama serve")
+        else
+          on_error("HTTP request failed: " .. err_msg)
+        end
+        return
+      end
+
+      if not result.stdout or result.stdout == "" then
+        on_error("Empty response from Ollama")
+        return
+      end
+
+      local ok, response = pcall(vim.fn.json_decode, result.stdout)
+      if not ok then
+        on_error("Failed to parse JSON: " .. result.stdout:sub(1, 100))
+        return
+      end
+
+      if response.error then
+        on_error(response.error)
+        return
+      end
+
+      local models = {}
+      local seen = {}
+      for _, rec in ipairs(response.recommendations or {}) do
+        local model = rec.model
+        if model and model ~= "" and not seen[model] then
+          table.insert(models, model)
+          seen[model] = true
+        end
+      end
+
+      on_success(models)
     end)
   end)
 end

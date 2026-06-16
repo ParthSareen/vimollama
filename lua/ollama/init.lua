@@ -98,4 +98,18 @@ function M.show_model_picker(models, current)
   end)
 end
 
+function M.show_recommended_model_picker(fallback_models, current)
+  api.model_recommendations(
+    function(models)
+      if not models or #models == 0 then
+        models = fallback_models
+      end
+      M.show_model_picker(models, current)
+    end,
+    function(_)
+      M.show_model_picker(fallback_models, current)
+    end
+  )
+end
+
 return M

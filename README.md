@@ -72,7 +72,8 @@ git clone https://github.com/ParthSareen/vimollama ~/.local/share/nvim/site/pack
 -- Required: specify your Ollama model
 vim.g.ollama_model = "qwen3-coder:480b-cloud"
 
--- Optional: models for the switcher (defaults shown)
+-- Optional: override models for the switcher
+-- By default, the switcher uses Ollama model recommendations.
 vim.g.ollama_models = { "qwen3-coder:480b-cloud", "glm-4.7:cloud" }
 
 -- Optional: customize keymaps (defaults shown)

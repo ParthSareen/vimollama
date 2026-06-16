@@ -477,10 +477,14 @@ endfunction
 
 " Switch between configured models
 function! ollama#SwitchModel() abort
-  let l:models = get(g:, 'ollama_models', s:default_models)
   let l:current = get(g:, 'ollama_model', '')
 
-  call luaeval('require("ollama").show_model_picker(_A[1], _A[2])', [l:models, l:current])
+  if exists('g:ollama_models')
+    call luaeval('require("ollama").show_model_picker(_A[1], _A[2])', [g:ollama_models, l:current])
+    return
+  endif
+
+  call luaeval('require("ollama").show_recommended_model_picker(_A[1], _A[2])', [s:default_models, l:current])
 endfunction
 
 " Called from Lua when user selects a model
